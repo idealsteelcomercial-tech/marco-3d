@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marco de Aço Galvanizado 3D — Aços Ideais</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0f1056; --navy-2:#1b1d78; --red:#e3312a; --ink:#151827; --muted:#6b7084;
+    --line:#e3e5ee; --bg:#f4f5f9; --panel:#ffffff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;font-family:Montserrat,system-ui,sans-serif;color:var(--ink);background:var(--bg)}
+  .app{display:grid;grid-template-columns:1fr 340px;height:100vh;min-height:560px}
+  .stage{position:relative;overflow:hidden;background:radial-gradient(120% 90% at 50% 35%,#ffffff 0%,#eef0f6 55%,#dfe2ec 100%)}
+  #c{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+  #c:active{cursor:grabbing}
+  .brand{position:absolute;left:22px;top:18px;display:flex;align-items:center;gap:10px;pointer-events:none}
+  .brand .logo{font-weight:800;letter-spacing:.06em;color:var(--navy);font-size:15px}
+  .brand .logo b{color:var(--red)}
+  .brand .tag{font-size:11px;color:var(--muted);border-left:1px solid #c9ccd8;padding-left:10px}
+  .viewbar{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:4px;background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:12px;padding:4px;box-shadow:0 6px 24px rgba(15,16,86,.10)}
+  .viewbar button{border:0;background:transparent;font:600 12px Montserrat;color:var(--navy);padding:8px 12px;border-radius:8px;cursor:pointer;white-space:nowrap}
+  .viewbar button:hover{background:#eef0f8}
+  .viewbar button.on{background:var(--navy);color:#fff}
+  .hint{position:absolute;right:18px;top:18px;font-size:11px;color:var(--muted);background:rgba(255,255,255,.8);padding:6px 10px;border-radius:8px;border:1px solid var(--line)}
+  .cad{position:absolute;left:22px;bottom:22px;font:500 10px ui-monospace,Menlo,monospace;color:#8a8fa3;line-height:1.5;pointer-events:none}
+  .axis{position:absolute;left:18px;bottom:70px;width:70px;height:70px;pointer-events:none}
+  .label{font:700 12px Montserrat;color:var(--red);background:rgba(255,255,255,.92);border:1px solid #f3c3c0;padding:3px 7px;border-radius:6px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .label.navy{color:var(--navy);border-color:#cfd2ea}
+  aside{background:var(--panel);border-left:1px solid var(--line);overflow:auto;padding:22px 22px 28px;display:flex;flex-direction:column;gap:20px}
+  .eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--red);text-transform:uppercase}
+  h1{font-size:20px;line-height:1.25;color:var(--navy);margin-top:6px;font-weight:800}
+  .sub{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5}
+  .group h3{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-bottom:9px}
+  .seg{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+  .seg button,.modes button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 0;font:700 13px Montserrat;color:var(--navy);cursor:pointer;transition:.15s}
+  .seg button:hover,.modes button:hover{border-color:var(--navy)}
+  .seg button.on,.modes button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .modes{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .modes button{font-size:12px;font-weight:600}
+  .specs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .spec{background:var(--bg);border-radius:10px;padding:10px 12px}
+  .spec span{display:block;font-size:10.5px;color:var(--muted);font-weight:600}
+  .spec b{font-size:15px;color:var(--navy)}
+  .field{display:flex;flex-direction:column;gap:5px;margin-bottom:9px}
+  .field label{font-size:11.5px;font-weight:600;color:var(--ink)}
+  .field input{border:1px solid var(--line);border-radius:9px;padding:10px 11px;font:600 13px ui-monospace,Menlo,monospace;color:var(--navy);text-transform:uppercase;outline:none}
+  .field input:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(15,16,86,.08)}
+  .toggles{display:flex;flex-direction:column;gap:8px}
+  .tg{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600;cursor:pointer;user-select:none}
+  .tg input{display:none}
+  .tg i{width:38px;height:22px;border-radius:20px;background:#d5d8e3;position:relative;transition:.2s;flex:none}
+  .tg i:after{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  .tg input:checked+i{background:var(--red)}
+  .tg input:checked+i:after{left:19px}
+  .cta{display:block;text-align:center;background:var(--red);color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:14px;border-radius:12px;box-shadow:0 8px 20px rgba(227,49,42,.25)}
+  .cta:hover{filter:brightness(1.05)}
+  .rec{border:1px dashed #c4c7d6;background:#fafbfe;color:var(--navy);font:700 12.5px Montserrat;padding:11px;border-radius:12px;cursor:pointer}
+  .rec:disabled{opacity:.6;cursor:wait}
+  .note{font-size:11px;color:var(--muted);line-height:1.45}
+  .trust{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--muted);font-weight:600}
+  .trust span:before{content:"✓ ";color:#1c9b55}
+  
+  body.embed .app{grid-template-columns:1fr}
+  body.embed aside{display:none}
+  @media (max-width:860px){
+    .app{grid-template-columns:1fr;grid-template-rows:62vh auto;height:auto}
+    aside{border-left:0;border-top:1px solid var(--line)}
+    .viewbar{bottom:10px;max-width:96vw;overflow:auto}
+    .hint{display:none}
+  }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+</head>
+<body>
+<div class="app">
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+    <div class="brand"><div class="logo"><b>A</b>ÇOS IDEAIS</div><div class="tag">Visualizador 3D</div></div>
+    <div class="hint">Arraste para girar · Role para zoom · Botão direito move</div>
+    <div class="viewbar" id="viewbar">
+      <button data-view="iso" class="on">Isométrica</button>
+      <button data-view="front">Frontal</button>
+      <button data-view="top">Plaqueta</button>
+      <button data-view="tip">Ponta</button>
+      <button id="spinBtn">⟳ Girar</button>
+    </div>
+    <div class="cad" id="cad">ESCALA 1:1 · UNID. mm</div>
+  </div>
+  <aside>
+    <div>
+      <div class="eyebrow">Padrão INCRA · Georreferenciamento</div>
+      <h1>Marco de Aço Galvanizado</h1>
+      <p class="sub">Gire, aproxime e veja cada detalhe da peça — inclusive como fica a sua credencial gravada na plaqueta.</p>
+    </div>
+    <div class="group">
+      <h3>Tamanho</h3>
+      <div class="seg" id="sizes">
+        <button data-l="300" class="on">30</button><button data-l="400">40</button><button data-l="500">50</button><button data-l="600">60</button><button data-l="900">90</button>
+      </div>
+    </div>
+    <div class="specs">
+      <div class="spec"><span>Comprimento</span><b id="sL">300 mm</b></div>
+      <div class="spec"><span>Peso aprox.</span><b id="sW">0,450 kg</b></div>
+      <div class="spec"><span>Tubo · parede</span><b>Ø 2" × 0,95 mm</b></div>
+      <div class="spec"><span>Acabamento</span><b>Galvanizado</b></div>
+    </div>
+    <div class="group">
+      <h3>Simule a gravação na plaqueta</h3>
+      <div class="field"><label for="cred">Credencial INCRA</label><input id="cred" maxlength="6" value="ABCD" autocomplete="off"></div>
+      <div class="field"><label for="num">Numeração do vértice</label><input id="num" maxlength="8" value="M-0001" autocomplete="off"></div>
+      <p class="note">A gravação de 1 credencial + numeração sequencial é cortesia — a peça chega pronta para cravar.</p>
+    </div>
+    <div class="group">
+      <h3>Modo de exibição</h3>
+      <div class="modes" id="modes">
+        <button data-mode="real" class="on">Realista</button><button data-mode="wire">Aramado</button><button data-mode="xray">Raio-X</button>
+      </div>
+    </div>
+    <div class="toggles">
+      <label class="tg">Mostrar cotas <input type="checkbox" id="tDim" checked><i></i></label>
+      <label class="tg">Vista explodida <input type="checkbox" id="tExp"><i></i></label>
+    </div>
+    <a class="cta" id="buy" href="https://www.acosideais.com/produtos/marco-de-aco-galvanizado-georreferenciamento-incra/" target="_blank" rel="noopener">Comprar o marco de 30 cm →</a>
+    <button class="rec" id="rec">● Gravar vídeo 360° deste tamanho</button>
+    <p class="note" id="recNote">Gera um vídeo girando a peça (8 s) para usar no site, Mercado Livre ou Instagram.</p>
+    <div class="trust"><span>Envio para todo o Brasil</span><span>Despacho em 48 h</span><span>Plaqueta inclusa</span></div>
+  </aside>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+if (location.hash === '#embed' || location.hash === '#video') document.body.classList.add('embed');
+const VIDEO = location.hash === '#video';
+const stage = document.getElementById('stage');
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, preserveDrawingBuffer:true, alpha:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.domElement.style.cssText = 'position:absolute;inset:0;pointer-events:none';
+stage.appendChild(labelRenderer.domElement);
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+const camera = new THREE.PerspectiveCamera(30, 1, 1, 20000);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.minDistance = 120; controls.maxDistance = 4000;
+// luzes de estúdio
+const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(500, 1400, 700);
+key.castShadow = true; key.shadow.mapSize.set(2048, 2048);
+Object.assign(key.shadow.camera, { left:-600, right:600, top:600, bottom:-600, near:10, far:4000 });
+key.shadow.radius = 6;
+scene.add(key);
+const rim = new THREE.DirectionalLight(0xbfd3ff, 1.4); rim.position.set(-800, 600, -900); scene.add(rim);
+scene.add(new THREE.HemisphereLight(0xffffff, 0xc9cce0, 0.5));
+const floor = new THREE.Mesh(new THREE.CircleGeometry(900, 64), new THREE.ShadowMaterial({ opacity:0.16 }));
+floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
+const grid = new THREE.GridHelper(1600, 32, 0xc9ccdb, 0xdfe1ea); grid.material.transparent = true; grid.material.opacity = .55; grid.position.y = 0.2; scene.add(grid);
+// ---------- texturas procedurais ----------
+function spangleTexture(){
+  // padrão "flor de zinco" da galvanização a quente
+  const s = 1024, cv = document.createElement('canvas'); cv.width = cv.height = s;
+  const g = cv.getContext('2d');
+  g.fillStyle = '#b9bec4'; g.fillRect(0,0,s,s);
+  const pts = Array.from({length:420}, () => [Math.random()*s, Math.random()*s, 204+Math.random()*20]);
+  const img = g.getImageData(0,0,s,s), d = img.data;
+  for (let y=0;y<s;y+=2) for (let x=0;x<s;x+=2){
+    let best=1e9, second=1e9, shade=200;
+    for (const p of pts){
+      let dx=Math.abs(x-p[0]); dx=Math.min(dx,s-dx); let dy=Math.abs(y-p[1]); dy=Math.min(dy,s-dy);
+      const dd=dx*dx+dy*dy; if (dd<best){second=best;best=dd;shade=p[2];} else if (dd<second) second=dd;
+    }
+    const edge = Math.sqrt(second)-Math.sqrt(best) < 1.4 ? -7 : 0;
+    const v = Math.max(0, Math.min(255, shade + edge + (Math.random()*10-5)));
+    for (const [ox,oy] of [[0,0],[1,0],[0,1],[1,1]]){ const i=((y+oy)*s+(x+ox))*4; d[i]=v; d[i+1]=v+2; d[i+2]=v+5; d[i+3]=255; }
+  }
+  g.putImageData(img,0,0);
+  const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  return t;
+}
+const spangle = spangleTexture();
+const plaqCanvas = document.createElement('canvas'); plaqCanvas.width = plaqCanvas.height = 1024;
+const plaqTex = new THREE.CanvasTexture(plaqCanvas); plaqTex.colorSpace = THREE.SRGBColorSpace; plaqTex.anisotropy = 8;
+const bumpCanvas = document.createElement('canvas'); bumpCanvas.width = bumpCanvas.height = 1024;
+const bumpTex = new THREE.CanvasTexture(bumpCanvas);
+function arcText(g, text, r, cx, cy, bottom){
+  const sp = 5, chars = [...text], ws = chars.map(c => g.measureText(c).width);
+  const T = ws.reduce((a,w)=>a+w+sp, -sp) / r;
+  let acc = 0;
+  chars.forEach((c,i) => {
+    const mid = (acc + ws[i]/2) / r;
+    const ang = bottom ? Math.PI + (T/2 - mid) : (-T/2 + mid);
+    g.save(); g.translate(cx, cy); g.rotate(ang); g.translate(0, -r);
+    if (bottom) g.rotate(Math.PI);
+    g.textAlign = 'center'; g.fillText(c, 0, 0); g.restore();
+    acc += ws[i] + sp;
+  });
+}
+function drawPlaqueta(cred, num){
+  for (const [cv, isBump] of [[plaqCanvas,false],[bumpCanvas,true]]){
+    const g = cv.getContext('2d'), S = 1024, C = S/2;
+    g.clearRect(0,0,S,S);
+    if (isBump){ g.fillStyle = '#ffffff'; g.fillRect(0,0,S,S); }
+    else {
+      const grd = g.createRadialGradient(C*0.8,C*0.7,40,C,C,C);
+      grd.addColorStop(0,'#e6e8ea'); grd.addColorStop(1,'#a9aeb4');
+      g.fillStyle = grd; g.fillRect(0,0,S,S);
+      // escovado circular
+      g.globalAlpha = .07;
+      for (let r=20;r<C;r+=3){ g.strokeStyle = Math.random()>.5?'#ffffff':'#5a6068'; g.lineWidth=1.3; g.beginPath(); g.arc(C,C,r,0,Math.PI*2); g.stroke(); }
+      g.globalAlpha = 1;
+    }
+    const ink = isBump ? '#000000' : 'rgba(55,60,68,.92)';
+    g.fillStyle = ink; g.strokeStyle = ink;
+    // aro
+    g.lineWidth = 10; g.beginPath(); g.arc(C,C,C-38,0,Math.PI*2); g.stroke();
+    g.font = '800 66px Montserrat, Arial'; g.textBaseline = 'middle';
+    arcText(g, 'CREDENCIADO', C-92, C, C, false);
+    g.font = '800 56px Montserrat, Arial';
+    arcText(g, 'PROTEGIDO POR LEI', C-92, C, C, true);
+    g.lineWidth = 8; g.textAlign = 'center';
+    // quadrante da credencial
+    g.strokeRect(C-190, 225, 380, 96);
+    g.font = '800 74px "Courier New", monospace'; g.fillText((cred||'').toUpperCase().slice(0,6), C, 276);
+    // triângulo no centro
+    g.lineWidth = 9; g.beginPath(); g.moveTo(C, C-72); g.lineTo(C-64, C+46); g.lineTo(C+64, C+46); g.closePath(); g.stroke();
+    g.beginPath(); g.arc(C, C+8, 10, 0, Math.PI*2); g.fill();
+    // quadrante da numeração
+    g.lineWidth = 8; g.strokeRect(C-190, 703, 380, 96);
+    g.font = '800 70px "Courier New", monospace'; g.fillText((num||'').toUpperCase().slice(0,8), C, 753);
+    g.textAlign = 'left';
+  }
+  plaqTex.needsUpdate = true; bumpTex.needsUpdate = true;
+}
+// ---------- materiais ----------
+const galv = new THREE.MeshPhysicalMaterial({ color:0xd6dade, map:spangle, metalness:1, roughness:.32, clearcoat:.25, clearcoatRoughness:.4, envMapIntensity:1.25 });
+const galvDark = new THREE.MeshStandardMaterial({ color:0x2a2e35, metalness:.6, roughness:.6 });
+const plaqTop = new THREE.MeshPhysicalMaterial({ map:plaqTex, bumpMap:bumpTex, bumpScale:2.2, metalness:.85, roughness:.38, envMapIntensity:1.1 });
+const plaqSide = new THREE.MeshPhysicalMaterial({ color:0xcfd3d8, metalness:1, roughness:.3 });
+const allMats = [galv, galvDark, plaqTop, plaqSide];
+// ---------- modelo paramétrico ----------
+const R = 25.4;          // tubo 2"
+const PR = 31;           // raio da plaqueta
+const marco = new THREE.Group(); scene.add(marco);
+let tube, capGroup, fins = [], dimGroup, wireGroup;
+let L = 300, explode = 0, explodeTarget = 0;
+function buildMarco(){
+  marco.clear(); fins = [];
+  // corpo: perfil torneado (tubo + ponta afunilada)
+  const prof = [
+    new THREE.Vector2(R-0.95, 45), new THREE.Vector2(R-0.95, 0.3), new THREE.Vector2(R-0.75, 0),
+    new THREE.Vector2(R-0.2, 0), new THREE.Vector2(R, 0.3),
+    new THREE.Vector2(R, L-6), new THREE.Vector2(R+0.6, L-2), new THREE.Vector2(R+0.6, L)
+  ];
+  const lg = new THREE.LatheGeometry(prof, 96);
+  const uv = lg.attributes.uv; for (let i=0;i<uv.count;i++) uv.setXY(i, uv.getX(i)*3, uv.getY(i)*L/53);
+  tube = new THREE.Mesh(lg, galv); tube.material.side = THREE.DoubleSide; tube.castShadow = true; tube.receiveShadow = true; marco.add(tube);
+  const inner = new THREE.Mesh(new THREE.CircleGeometry(R-0.95, 64), new THREE.MeshBasicMaterial({color:0x1d2026}));
+  inner.rotation.x = Math.PI/2; inner.position.y = 44; marco.add(inner);   // interior escuro do tubo (ponta aberta)
+  // costura de solda longitudinal
+  const seam = new THREE.Mesh(new THREE.BoxGeometry(1.2, L-110, 1.2), galv);
+  seam.position.set(0, 100+(L-110)/2, R+0.1); marco.add(seam);
+  // 3 aletas estampadas, voltadas para cima (anti-arranque), a 120°
+  for (let k=0;k<3;k++){
+    const th = k*2*Math.PI/3 + Math.PI/6;
+    const base = new THREE.Group(); base.position.set(R*Math.cos(th), 38, R*Math.sin(th)); base.rotation.y = -th; marco.add(base);
+    // perfil da aleta: base reta e ponta abaulada (semicírculo)
+    const sh = new THREE.Shape(); const fw = 6, fh = 36;
+    sh.moveTo(-fw, 0); sh.lineTo(-fw, fh); sh.absarc(0, fh, fw, Math.PI, 0, true); sh.lineTo(fw, 0); sh.lineTo(-fw, 0);
+    const slot = new THREE.Mesh(new THREE.ShapeGeometry(sh, 24), new THREE.MeshBasicMaterial({color:0x23262c, side:THREE.DoubleSide}));
+    slot.rotation.y = Math.PI/2; slot.position.set(0.25, 0, 0); base.add(slot);
+    const pivot = new THREE.Group(); base.add(pivot);
+    const fg = new THREE.ExtrudeGeometry(sh, { depth:1.4, bevelEnabled:true, bevelThickness:.3, bevelSize:.3, bevelSegments:2, curveSegments:24 });
+    const fin = new THREE.Mesh(fg, galv); fin.rotation.y = Math.PI/2; fin.position.set(0, 0, 0); fin.castShadow = true; pivot.add(fin);
+    pivot.rotation.z = -0.38; fins.push(pivot);
+  }
+  // conjunto plaqueta (cabeça)
+  capGroup = new THREE.Group(); capGroup.position.y = L; marco.add(capGroup);
+  const collar = new THREE.Mesh(new THREE.TorusGeometry(R+0.8, 1.6, 16, 96), galv);
+  collar.rotation.x = Math.PI/2; collar.position.y = 0.5; capGroup.add(collar);
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(PR, PR+0.8, 4.5, 96, 1), [plaqSide, plaqTop, plaqSide]);
+  cap.position.y = 3.2; cap.rotation.y = Math.PI/2; cap.castShadow = true; capGroup.add(cap);
+  const bevel = new THREE.Mesh(new THREE.TorusGeometry(PR-0.2, 1.1, 12, 96), plaqSide);
+  bevel.rotation.x = Math.PI/2; bevel.position.y = 5.4; capGroup.add(bevel);
+  const pin = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 22, 24), galvDark);
+  pin.position.y = -9; capGroup.add(pin);   // pino de cravação (aparece na vista explodida)
+  buildWire(); buildDims(); applyMode(currentMode);
+}
+function buildWire(){
+  wireGroup = new THREE.Group();
+  marco.traverse(o => {
+    if (o.isMesh){
+      const e = new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry, 25), new THREE.LineBasicMaterial({ color:0x0f1056, transparent:true, opacity:.75 }));
+      e.userData.src = o; wireGroup.add(e);
+    }
+  });
+  scene.add(wireGroup); wireGroup.visible = false;
+}
+function syncWire(){
+  if (!wireGroup) return;
+  wireGroup.children.forEach(e => { e.userData.src.updateWorldMatrix(true,false); e.matrixAutoUpdate=false; e.matrix.copy(e.userData.src.matrixWorld); });
+}
+function makeLabel(text, cls){ const d=document.createElement('div'); d.className='label'+(cls?' '+cls:''); d.textContent=text; return new CSS2DObject(d); }
+function dimLine(a, b, col){
+  const g = new THREE.BufferGeometry().setFromPoints([a,b]);
+  return new THREE.Line(g, new THREE.LineBasicMaterial({ color:col, depthTest:false, transparent:true }));
+}
+function buildDims(){
+  if (dimGroup) { dimGroup.traverse(o=>{ if (o.isCSS2DObject) o.element.remove(); }); scene.remove(dimGroup); }
+  dimGroup = new THREE.Group(); scene.add(dimGroup);
+  const red = 0xe3312a, navy = 0x0f1056, x = R + 70;
+  // comprimento total
+  dimGroup.add(dimLine(new THREE.Vector3(x,0,0), new THREE.Vector3(x,L+6,0), red));
+  for (const y of [0, L+6]){
+    dimGroup.add(dimLine(new THREE.Vector3(R+6,y,0), new THREE.Vector3(x+12,y,0), red));
+    const tick = dimLine(new THREE.Vector3(x-7,y-7,0), new THREE.Vector3(x+7,y+7,0), red); dimGroup.add(tick);
+  }
+  const lL = makeLabel(`${L} mm`); lL.position.set(x+8, L/2, 0); dimGroup.add(lL);
+  // diâmetro plaqueta
+  const yT = L + 46;
+  dimGroup.add(dimLine(new THREE.Vector3(-PR,yT,0), new THREE.Vector3(PR,yT,0), navy));
+  for (const sx of [-PR, PR]) dimGroup.add(dimLine(new THREE.Vector3(sx,L+7,0), new THREE.Vector3(sx,yT+8,0), navy));
+  const lP = makeLabel(`Ø ${PR*2} plaqueta`, 'navy'); lP.position.set(0, yT+16, 0); dimGroup.add(lP);
+  // diâmetro do tubo
+  const yD = Math.min(L*0.55, 260);
+  dimGroup.add(dimLine(new THREE.Vector3(-R-48,yD,0), new THREE.Vector3(-R,yD,0), navy));
+  const lD = makeLabel('Ø 50,8 (2") · parede 0,95', 'navy'); lD.position.set(-R-120, yD, 0); dimGroup.add(lD);
+  // aletas
+  const lA = makeLabel('3 aletas anti-arranque', 'navy'); lA.position.set(-R-110, 70, 0); dimGroup.add(lA);
+  dimGroup.add(dimLine(new THREE.Vector3(-R-48,70,0), new THREE.Vector3(-R-10,66,0), navy));
+  dimGroup.visible = document.getElementById('tDim').checked;
+}
+// ---------- modos de exibição ----------
+let currentMode = 'real';
+function applyMode(m){
+  currentMode = m;
+  allMats.forEach(mt => { mt.wireframe = false; mt.transparent = false; mt.opacity = 1; mt.depthWrite = true; });
+  if (wireGroup) wireGroup.visible = (m !== 'real');
+  if (m === 'wire'){ allMats.forEach(mt => { mt.transparent = true; mt.opacity = .12; mt.depthWrite = false; }); }
+  if (m === 'xray'){ allMats.forEach(mt => { mt.transparent = true; mt.opacity = .38; mt.depthWrite = false; }); }
+  marco.traverse(o => { if (o.isMesh) o.castShadow = (m === 'real'); });
+}
+// ---------- câmera ----------
+let camTarget = null;
+function frameFor(view){
+  const h = L + 90 + explodeTarget*90, cy = h*0.5;
+  const d = Math.max(h, 260) * 2.45;
+  const t = new THREE.Vector3(0, cy, 0);
+  let p;
+  if (view==='front') p = new THREE.Vector3(0, cy, d);
+  else if (view==='top') { t.set(0, L+6, 0); p = new THREE.Vector3(0.01, L+6+230, 120); }
+  else if (view==='tip') { t.set(0, 45, 0); p = new THREE.Vector3(170, 20, 210); }
+  else p = new THREE.Vector3(d*0.62, cy + d*0.38, d*0.72);
+  return { p, t };
+}
+function goView(v, instant){
+  const f = frameFor(v);
+  if (instant){ camera.position.copy(f.p); controls.target.copy(f.t); controls.update(); camTarget=null; }
+  else camTarget = f;
+  document.querySelectorAll('#viewbar [data-view]').forEach(b => b.classList.toggle('on', b.dataset.view===v));
+}
+// ---------- UI ----------
+const weights = {300:'0,450', 400:'0,590', 500:'0,730', 600:'0,885', 900:'1,330'};
+const sizeLabel = l => `${l/10} cm`;
+document.getElementById('sizes').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  document.querySelectorAll('#sizes button').forEach(x => x.classList.toggle('on', x===b));
+  L = +b.dataset.l; if (wireGroup) scene.remove(wireGroup);
+  buildMarco(); goView('iso');
+  document.getElementById('sL').textContent = `${L} mm`;
+  document.getElementById('sW').textContent = `${weights[L]} kg`;
+  document.getElementById('buy').textContent = `Comprar o marco de ${sizeLabel(L)} →`;
+});
+document.getElementById('modes').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  document.querySelectorAll('#modes button').forEach(x => x.classList.toggle('on', x===b));
+  applyMode(b.dataset.mode);
+});
+document.getElementById('viewbar').addEventListener('click', e => {
+  const b = e.target.closest('[data-view]'); if (b) goView(b.dataset.view);
+});
+const spinBtn = document.getElementById('spinBtn');
+spinBtn.onclick = () => { controls.autoRotate = !controls.autoRotate; spinBtn.classList.toggle('on', controls.autoRotate); };
+document.getElementById('tDim').onchange = e => { dimGroup.visible = e.target.checked; };
+document.getElementById('tExp').onchange = e => { explodeTarget = e.target.checked ? 1 : 0; };
+const cred = document.getElementById('cred'), num = document.getElementById('num');
+const redraw = () => drawPlaqueta(cred.value, num.value);
+cred.oninput = redraw; num.oninput = redraw;
+// ---------- gravação de vídeo 360° ----------
+const recBtn = document.getElementById('rec'), recNote = document.getElementById('recNote');
+recBtn.onclick = async () => {
+  if (!window.MediaRecorder || !canvas.captureStream){ recNote.textContent = 'Seu navegador não suporta gravação. Use o Chrome no computador.'; return; }
+  recBtn.disabled = true; recBtn.textContent = '● Gravando… 8 s';
+  const showDims = dimGroup.visible; dimGroup.visible = false;
+  const prevAuto = controls.autoRotate; controls.autoRotate = false;
+  goView('iso', true);
+  const stream = canvas.captureStream(60);
+  const type = ['video/mp4;codecs=avc1','video/webm;codecs=vp9','video/webm'].find(t => MediaRecorder.isTypeSupported(t));
+  const rec = new MediaRecorder(stream, { mimeType:type, videoBitsPerSecond: 12e6 });
+  const chunks = []; rec.ondataavailable = e => chunks.push(e.data);
+  recording = { start: performance.now(), dur: 8000, base: camera.position.clone().sub(controls.target) };
+  rec.start();
+  await new Promise(r => setTimeout(r, 8050));
+  rec.stop(); await new Promise(r => rec.onstop = r);
+  recording = null; dimGroup.visible = showDims; controls.autoRotate = prevAuto;
+  const blob = new Blob(chunks, { type }); const ext = type.includes('mp4') ? 'mp4' : 'webm';
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `marco-aco-${L/10}cm-360.${ext}`;
+  document.body.appendChild(a); a.click(); a.remove();
+  recBtn.disabled = false; recBtn.textContent = '● Gravar vídeo 360° deste tamanho';
+  recNote.innerHTML = `Vídeo gerado (${ext.toUpperCase()}). Se o download não abrir, <a href="${url}" download="marco-aco-${L/10}cm-360.${ext}">clique aqui</a>.`;
+};
+let recording = null;
+// ---------- loop ----------
+function resize(){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false); labelRenderer.setSize(w, h);
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+const clock = new THREE.Clock();
+function tick(){
+  const dt = Math.min(clock.getDelta(), 0.05);
+  // vista explodida suave
+  explode += (explodeTarget - explode) * Math.min(1, dt*6);
+  if (capGroup) capGroup.position.y = L + explode*90;
+  fins.forEach(p => p.rotation.z = -(0.38 + explode*0.3));
+  // transição de câmera
+  if (camTarget){
+    camera.position.lerp(camTarget.p, Math.min(1, dt*4)); controls.target.lerp(camTarget.t, Math.min(1, dt*4));
+    if (camera.position.distanceTo(camTarget.p) < 1) camTarget = null;
+  }
+  if (recording){
+    const k = Math.min(1, (performance.now()-recording.start)/recording.dur);
+    const ang = k * Math.PI * 2, b = recording.base;
+    const r = Math.hypot(b.x, b.z), a0 = Math.atan2(b.z, b.x);
+    camera.position.set(controls.target.x + r*Math.cos(a0+ang), controls.target.y + b.y, controls.target.z + r*Math.sin(a0+ang));
+    camera.lookAt(controls.target);
+  } else if (!VIDEO) controls.update();
+  syncWire();
+  renderer.render(scene, camera); labelRenderer.render(scene, camera);
+  requestAnimationFrame(tick);
+}
+document.fonts.ready.then(redraw); redraw();
+buildMarco(); resize(); goView('iso', true); tick();
+window.__ready = true;
+</script>
+</body>
+</html>

@@ -74,6 +74,15 @@
   }  body.embed .app{grid-template-rows:1fr !important;height:100vh !important;min-height:0}
   body.embed{overflow:hidden}
 
+  .sizebar{position:absolute;right:14px;top:14px;display:none;align-items:center;gap:4px;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:12px;padding:5px;box-shadow:0 6px 24px rgba(15,16,86,.10)}
+  .sizebar span{font:700 10px Montserrat;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:0 6px}
+  .sizebar button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 9px;font:700 12px Montserrat;color:var(--navy);cursor:pointer;min-width:38px}
+  .sizebar button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .sizeinfo{position:absolute;right:14px;top:62px;display:none;font:700 11px Montserrat;color:var(--navy);background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:8px;padding:5px 9px}
+  body.embed .sizebar{display:flex}
+  body.embed .sizeinfo{display:block}
+  body.embed .brand .tag{display:none}
+  @media (max-width:520px){ .sizebar span{display:none} .sizebar button{padding:6px 7px;min-width:32px;font-size:11px} }
 </style>
 <script type="importmap">
 { "imports": {
@@ -96,6 +105,8 @@
       <button id="spinBtn">⟳ Girar</button>
     </div>
     <div class="cad" id="cad">ESCALA 1:1 · UNID. mm</div>
+    <div class="sizebar" id="sizebar"><span>Tamanho</span><button data-l="300" class="on">30</button><button data-l="400">40</button><button data-l="500">50</button><button data-l="600">60</button><button data-l="900">90</button></div>
+    <div class="sizeinfo" id="sizeinfo">30 cm · 300 mm · 0,450 kg</div>
   </div>
   <aside>
     <div>
@@ -403,6 +414,14 @@ document.getElementById('tExp').onchange = e => { explodeTarget = e.target.check
 const cred = document.getElementById('cred'), num = document.getElementById('num');
 const redraw = () => drawPlaqueta(cred.value, num.value);
 cred.oninput = redraw; num.oninput = redraw;
+document.getElementById('sizebar').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  document.querySelector('#sizes button[data-l="'+b.dataset.l+'"]').click();
+});
+document.getElementById('sizes').addEventListener('click', () => {
+  document.querySelectorAll('#sizebar button').forEach(x => x.classList.toggle('on', +x.dataset.l === L));
+  document.getElementById('sizeinfo').textContent = (L/10)+' cm · '+L+' mm · '+weights[L]+' kg';
+});
 // ---------- gravação de vídeo 360° ----------
 const recBtn = document.getElementById('rec'), recNote = document.getElementById('recNote');
 recBtn.onclick = async () => {

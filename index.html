@@ -591,7 +591,7 @@ async function buildPDF(code){
   });
   ty += 6;
   // miniatura 3D
-  try { renderer.render(scene, camera); const src = renderer.domElement; const wc = document.createElement('canvas'); wc.width = src.width; wc.height = src.height; const wg = wc.getContext('2d'); wg.fillStyle = '#eef0f5'; wg.fillRect(0,0,wc.width,wc.height); wg.drawImage(src,0,0); const shot = wc.toDataURL('image/jpeg', 0.8); const r = renderer.domElement.height/renderer.domElement.width; const iw = 48; doc.addImage(shot, 'JPEG', tx, ty, iw, iw*r); doc.setFontSize(7.5); doc.setTextColor(...grey); doc.setFont('helvetica','normal'); doc.text('Prévia 3D aprovada', tx, ty+iw*r+4); } catch(e) {}
+  try { renderer.render(scene, camera); const src = renderer.domElement; const wc = document.createElement('canvas'); wc.width = src.width; wc.height = src.height; const wg = wc.getContext('2d'); wg.fillStyle = '#eef0f5'; wg.fillRect(0,0,wc.width,wc.height); wg.drawImage(src,0,0); const shot = wc.toDataURL('image/jpeg', 0.8); const r = renderer.domElement.height/renderer.domElement.width; const iw = Math.min(48, Math.max(20, (186 - ty) / r)); doc.addImage(shot, 'JPEG', tx, ty, iw, iw*r); doc.setFontSize(7.5); doc.setTextColor(...grey); doc.setFont('helvetica','normal'); doc.text('Prévia 3D aprovada', tx, ty+iw*r+4); } catch(e) {}
   // rodapé
   doc.setDrawColor(...navy); doc.setLineWidth(0.4); doc.line(12, 196, 285, 196);
   doc.setFontSize(8); doc.setTextColor(...grey); doc.setFont('helvetica','normal');

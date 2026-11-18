@@ -113,6 +113,14 @@
   body.embed .pz-ok,.pz-sheet.compact .pz-ok{padding:10px;font-size:12px}
   body.embed .pz-actions,.pz-sheet.compact .pz-actions{margin-top:8px}
   .pz-open-mode .sizeinfo,.pz-open-mode .pz-btn{display:none !important}
+  .pz-toggle{position:absolute;left:14px;top:52px;display:flex;gap:4px;background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:12px;padding:4px;box-shadow:0 6px 20px rgba(15,16,86,.12);z-index:5}
+  .pz-toggle button{border:0;background:transparent;font:800 12px Montserrat;color:var(--navy);padding:8px 12px;border-radius:9px;cursor:pointer;white-space:nowrap}
+  .pz-toggle button:hover{background:#eef0f8}
+  .pz-toggle button.on{background:var(--navy);color:#fff}
+  .pz-toggle #pzOpen.on{background:var(--red)}
+  .pz-hbtns{display:flex;align-items:center;gap:6px}
+  .pz-head .pz-back{width:auto;padding:0 10px;font:700 11.5px Montserrat;color:var(--navy)}
+  @media (max-width:520px){ .pz-toggle button{padding:7px 9px;font-size:11px} .pz-head .pz-back{font-size:10.5px;padding:0 8px} }
 </style>
 <script type="importmap">
 { "imports": {
@@ -137,9 +145,9 @@
     <div class="cad" id="cad">ESCALA 1:1 · UNID. mm</div>
     <div class="sizebar" id="sizebar"><span>Tamanho</span><button data-l="300" class="on">30</button><button data-l="400">40</button><button data-l="500">50</button><button data-l="600">60</button><button data-l="900">90</button></div>
     <div class="sizeinfo" id="sizeinfo">30 cm · 300 mm · 0,450 kg</div>
-    <button class="pz-btn" id="pzOpen" type="button">✎ Plaqueta personalizada</button>
+    <div class="pz-toggle" id="pzToggle" role="group" aria-label="Tipo de plaqueta"><button type="button" id="pzStd" class="on">Plaqueta padrão</button><button type="button" id="pzOpen">✎ Personalizada</button></div>
     <div class="pz-sheet" id="pzSheet" role="dialog" aria-label="Plaqueta personalizada">
-      <div class="pz-head"><b>Plaqueta personalizada</b><button type="button" id="pzClose" aria-label="Fechar">×</button></div>
+      <div class="pz-head"><b>Plaqueta personalizada</b><span class="pz-hbtns"><button type="button" id="pzBack" class="pz-back">↺ Usar plaqueta padrão</button><button type="button" id="pzClose" aria-label="Fechar">×</button></span></div>
       <div class="pz-sub">Preencha os dados e veja na hora como a plaqueta fica no marco. Ao aprovar, geramos o PDF da arte para o carimbo de gravação.</div>
       <div class="pz-grid">
         <label class="full">Nome da empresa (gravado no topo)<input id="pzEmp" maxlength="34" placeholder="Ex.: SÍTIO ARQUEOLÓGICO" autocomplete="organization"></label>
@@ -522,13 +530,17 @@ function pzLayout(open){
   } else camera.clearViewOffset();
 }
 function pzOpen(){
-  pz.on = true; pzSheet.classList.add('open'); pzRead(); redrawCustom();
+  pz.on = true; pzSync(); pzSheet.classList.add('open'); pzRead(); redrawCustom();
   const td=document.getElementById('tDim'); td.checked=false; setDimsVisible(false); controls.autoRotate = false; spinBtn.classList.remove('on'); goView('top'); pzLayout(true);
   setTimeout(()=>pzF.emp.focus(), 50); loadJsPDF().catch(()=>{});
 }
 function pzClose(){ pzSheet.classList.remove('open'); pzLayout(false); }
 document.getElementById('pzOpen').onclick = pzOpen;
 document.getElementById('pzClose').onclick = pzClose;
+function pzSync(){ document.getElementById('pzStd').classList.toggle('on', !pz.on); document.getElementById('pzOpen').classList.toggle('on', pz.on); }
+function pzStandard(){ pz.on = false; pzSync(); pzSheet.classList.remove('open'); pzLayout(false); drawPlaqueta(cred.value, num.value); goView('top'); }
+document.getElementById('pzStd').onclick = pzStandard;
+document.getElementById('pzBack').onclick = pzStandard;
 Object.values(pzF).forEach(i => i.addEventListener('input', () => { i.classList.remove('err'); pzRead(); redrawCustom(); }));
 window.addEventListener('resize', () => pzLayout(pzSheet.classList.contains('open')));
 const _origRedraw = redraw;

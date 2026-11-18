@@ -524,7 +524,7 @@ function pzLayout(open){
 function pzOpen(){
   pz.on = true; pzSheet.classList.add('open'); pzRead(); redrawCustom();
   const td=document.getElementById('tDim'); td.checked=false; setDimsVisible(false); controls.autoRotate = false; spinBtn.classList.remove('on'); goView('top'); pzLayout(true);
-  setTimeout(()=>pzF.emp.focus(), 50);
+  setTimeout(()=>pzF.emp.focus(), 50); loadJsPDF().catch(()=>{});
 }
 function pzClose(){ pzSheet.classList.remove('open'); pzLayout(false); }
 document.getElementById('pzOpen').onclick = pzOpen;
@@ -543,7 +543,7 @@ function loadJsPDF(){
 function artCode(){ const d=new Date(), p=n=>String(n).padStart(2,'0'); return 'ART-'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes()); }
 async function buildPDF(code){
   const jsPDF = await loadJsPDF();
-  const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+  const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4', compress:true });
   const navy=[15,16,86], red=[227,49,42], grey=[110,112,130];
   // cabeçalho
   doc.setFillColor(...navy); doc.rect(0,0,297,22,'F'); doc.setFillColor(...red); doc.rect(0,22,297,1.2,'F');
@@ -552,8 +552,8 @@ async function buildPDF(code){
   doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.text(code, 285, 10, {align:'right'});
   doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.text('Emitido em '+new Date().toLocaleString('pt-BR'), 285, 16, {align:'right'});
   // desenho técnico 2:1 (Ø62 mm → 124 mm)
-  const cv = document.createElement('canvas'); cv.width = cv.height = 2048; drawCustom(cv.getContext('2d'), 2048, pz, 'tech');
-  const D = 124, x0 = 22, y0 = 40; doc.addImage(cv.toDataURL('image/png'), 'PNG', x0, y0, D, D);
+  const cv = document.createElement('canvas'); cv.width = cv.height = 1600; drawCustom(cv.getContext('2d'), 1600, pz, 'tech');
+  const D = 124, x0 = 22, y0 = 40; doc.addImage(cv.toDataURL('image/jpeg', 0.9), 'JPEG', x0, y0, D, D);
   const mm = 62/1024, sc = 2; const f1 = v => (Math.round(v*10)/10).toFixed(1).replace('.',','); // 1 px da arte = 0,0605 mm reais; desenho em escala 2:1
   const cx = x0 + D/2, cy = y0 + D/2;
   doc.setDrawColor(...red); doc.setTextColor(...red); doc.setLineWidth(0.25); doc.setFontSize(8);
@@ -591,36 +591,72 @@ async function buildPDF(code){
   });
   ty += 6;
   // miniatura 3D
-  try { renderer.render(scene, camera); const src = renderer.domElement; const wc = document.createElement('canvas'); wc.width = src.width; wc.height = src.height; const wg = wc.getContext('2d'); wg.fillStyle = '#eef0f5'; wg.fillRect(0,0,wc.width,wc.height); wg.drawImage(src,0,0); const shot = wc.toDataURL('image/jpeg', 0.85); const r = renderer.domElement.height/renderer.domElement.width; const iw = 48; doc.addImage(shot, 'JPEG', tx, ty, iw, iw*r); doc.setFontSize(7.5); doc.setTextColor(...grey); doc.setFont('helvetica','normal'); doc.text('Prévia 3D aprovada', tx, ty+iw*r+4); } catch(e) {}
+  try { renderer.render(scene, camera); const src = renderer.domElement; const wc = document.createElement('canvas'); wc.width = src.width; wc.height = src.height; const wg = wc.getContext('2d'); wg.fillStyle = '#eef0f5'; wg.fillRect(0,0,wc.width,wc.height); wg.drawImage(src,0,0); const shot = wc.toDataURL('image/jpeg', 0.8); const r = renderer.domElement.height/renderer.domElement.width; const iw = 48; doc.addImage(shot, 'JPEG', tx, ty, iw, iw*r); doc.setFontSize(7.5); doc.setTextColor(...grey); doc.setFont('helvetica','normal'); doc.text('Prévia 3D aprovada', tx, ty+iw*r+4); } catch(e) {}
   // rodapé
   doc.setDrawColor(...navy); doc.setLineWidth(0.4); doc.line(12, 196, 285, 196);
   doc.setFontSize(8); doc.setTextColor(...grey); doc.setFont('helvetica','normal');
   doc.text('Arte aprovada pelo cliente no visualizador 3D. Conferir os dados antes de confeccionar o carimbo. Aços Ideais · CNPJ 27.797.999/0001-06 · WhatsApp (11) 99136-4294 · acosideais.com', 12, 201);
   return doc;
 }
+const UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbwOAc8Kgi6sGJgEtCGUBZoQ8cAsc0gMpi3a6ltUsrBm9OCROwB31Rji2UHIlJp-3V5z/exec';
+function canShareFiles(){ try { return !!(navigator.canShare && navigator.canShare({ files:[new File(['%PDF'], 'teste.pdf', {type:'application/pdf'})] })); } catch(e) { return false; } }
+async function uploadArte(doc, fname, code){
+  if (!UPLOAD_URL || UPLOAD_URL.indexOf('http') !== 0) return null;
+  const pdf = doc.output('datauristring').split(',')[1];
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 20000);
+  try {
+    const r = await fetch(UPLOAD_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, signal: ctl.signal,
+      body: JSON.stringify({ nome: fname, pdf, info:{ codigo: code, empresa: pz.emp.toUpperCase(), credenciado: pz.cod.toUpperCase(), contato: pz.con, numeracao: 'M-'+(pz.num||'0001'), marco: (L/10)+' cm' } }) });
+    const j = await r.json(); return j && j.ok ? j.url : null;
+  } catch(e) { return null; } finally { clearTimeout(t); }
+}
 document.getElementById('pzSend').onclick = async () => {
   pzRead();
   const miss = []; if (!pz.emp) miss.push(pzF.emp); if (!pz.cod) miss.push(pzF.cod); if (!pz.con) miss.push(pzF.con);
   const msg = document.getElementById('pzMsg');
   if (miss.length){ miss.forEach(i=>i.classList.add('err')); miss[0].focus(); msg.className='pz-msg'; msg.textContent='Preencha nome da empresa, código credenciado e telefone ou e-mail.'; return; }
-  const btn = document.getElementById('pzSend'); btn.disabled = true; btn.textContent = 'Gerando PDF da arte…';
+  const btn = document.getElementById('pzSend'); const resetBtn = () => { btn.disabled = false; btn.textContent = '✔ Aprovar arte e enviar no WhatsApp'; };
+  btn.disabled = true; btn.textContent = 'Gerando a arte…';
+  const share = canShareFiles();
+  // no computador, a aba do WhatsApp é aberta já no clique (evita bloqueio de pop-up)
+  let win = null;
+  if (!share) { win = window.open('', '_blank'); if (win) { try { win.document.write('<meta charset="utf-8"><title>Enviando arte…</title><p style="font:16px sans-serif;padding:24px;color:#0f1056">Enviando a arte da plaqueta para a Aços Ideais e abrindo o WhatsApp…</p>'); } catch(e){} } }
   try {
     const code = artCode(); const doc = await buildPDF(code);
     const fname = 'arte-plaqueta-'+(pz.cod||'marco').toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+code.toLowerCase()+'.pdf';
     const blob = doc.output('blob'); const file = new File([blob], fname, {type:'application/pdf'});
-    const text = 'Olá, Aços Ideais! Aprovei a arte da plaqueta personalizada ('+code+').\n'
-      + '• Empresa: '+pz.emp.toUpperCase()+'\n• Código credenciado: '+pz.cod.toUpperCase()+'\n• Numeração inicial: M-'+(pz.num||'0001')+'\n• Contato gravado: '+pz.con+'\n• Marco: '+(L/10)+' cm\nSegue o PDF da arte.';
+    const pdfUrl = URL.createObjectURL(blob);
+    const base = 'Olá, Aços Ideais! Aprovei a arte da plaqueta personalizada ('+code+').\n'
+      + '• Empresa: '+pz.emp.toUpperCase()+'\n• Código credenciado: '+pz.cod.toUpperCase()+'\n• Numeração inicial: M-'+(pz.num||'0001')+'\n• Contato gravado: '+pz.con+'\n• Marco: '+(L/10)+' cm';
+    const upload = uploadArte(doc, fname, code);   // salva no Drive da Aços Ideais em paralelo
     let shared = false;
-    if (navigator.canShare && navigator.canShare({ files:[file] })) {
-      try { await navigator.share({ files:[file], text }); shared = true; } catch(e) { if (e && e.name === 'AbortError') { btn.disabled=false; btn.textContent='✔ Aprovar arte e enviar no WhatsApp'; return; } }
+    if (share) {
+      btn.textContent = 'Abrindo o compartilhamento…';
+      try { await navigator.share({ files:[file], text: base + '\nPDF da arte em anexo.' }); shared = true; }
+      catch(e) { if (e && e.name === 'AbortError') { resetBtn(); msg.className='pz-msg'; msg.textContent='Envio cancelado. Toque em aprovar de novo quando quiser.'; return; } }
     }
-    if (!shared) {
-      const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove();
-      window.open('https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(text), '_blank');
-      msg.className = 'pz-msg ok'; msg.innerHTML = 'Arte aprovada! O PDF <b>'+fname+'</b> foi baixado. Anexe esse arquivo na conversa do WhatsApp que abrimos (clipe 📎 → Documento). Se o WhatsApp não abrir, chame no (11) 99136-4294.';
-    } else { msg.className = 'pz-msg ok'; msg.textContent = 'Arte enviada! Em breve confirmamos pelo WhatsApp.'; }
-  } catch(e) { msg.className='pz-msg'; msg.textContent = 'Não foi possível gerar o PDF ('+e.message+'). Tente novamente ou chame no WhatsApp (11) 99136-4294.'; }
-  btn.disabled = false; btn.textContent = '✔ Aprovar arte e enviar no WhatsApp';
+    if (shared) {
+      await upload;
+      msg.className = 'pz-msg ok'; msg.innerHTML = 'Arte enviada com o PDF anexado! Em breve confirmamos pelo WhatsApp. <a href="'+pdfUrl+'" download="'+fname+'">Baixar uma cópia do PDF</a>.';
+    } else {
+      btn.textContent = 'Salvando o PDF…';
+      const link = await upload;
+      const text = base + (link ? '\n📄 PDF da arte: '+link : '\n(O PDF da arte foi gerado no meu aparelho.)');
+      const wa = 'https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(text);
+      let opened = false;
+      if (win && !win.closed) { try { win.location.href = wa; opened = true; } catch(e){} }
+      if (!opened) { const w2 = window.open(wa, '_blank'); opened = !!w2; }
+      msg.className = 'pz-msg ok';
+      msg.innerHTML = (link ? 'Arte aprovada e PDF enviado! O link do PDF já vai na mensagem do WhatsApp. ' : 'Arte aprovada! ')
+        + (opened ? '' : '<a href="'+wa+'" target="_blank" rel="noopener"><b>Toque aqui para abrir o WhatsApp</b></a>. ')
+        + '<a href="'+pdfUrl+'" download="'+fname+'">Baixar uma cópia do PDF</a>.'
+        + (link ? '' : ' Anexe esse PDF na conversa (clipe 📎 → Documento).');
+    }
+  } catch(e) {
+    if (win && !win.closed) win.close();
+    msg.className='pz-msg'; msg.textContent = 'Não foi possível gerar a arte ('+e.message+'). Tente novamente ou chame no WhatsApp (11) 99136-4294.';
+  }
+  resetBtn();
 };
 
 // ---------- gravação de vídeo 360° ----------

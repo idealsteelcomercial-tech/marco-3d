@@ -150,13 +150,13 @@
       <div class="pz-head"><b>Plaqueta personalizada</b><span class="pz-hbtns"><button type="button" id="pzBack" class="pz-back">↺ Usar plaqueta padrão</button><button type="button" id="pzClose" aria-label="Fechar">×</button></span></div>
       <div class="pz-sub">Preencha os dados e veja na hora como a plaqueta fica no marco. Ao aprovar, geramos o PDF da arte para o carimbo de gravação.</div>
       <div class="pz-grid">
-        <label class="full">Nome da empresa (gravado no topo)<input id="pzEmp" maxlength="34" placeholder="Ex.: SÍTIO ARQUEOLÓGICO" autocomplete="organization"></label>
-        <label>Código credenciado<input id="pzCod" maxlength="8" placeholder="Ex.: IPHAN" autocomplete="off"></label>
+        <label class="full">Nome da empresa (opcional, gravado no topo)<input id="pzEmp" maxlength="34" placeholder="Ex.: SÍTIO ARQUEOLÓGICO" autocomplete="organization"></label>
+        <label>Código credenciado (opcional)<input id="pzCod" maxlength="8" placeholder="Ex.: IPHAN" autocomplete="off"></label>
         <label>Numeração inicial (opcional)<input id="pzNum" maxlength="6" placeholder="Ex.: 0001" inputmode="numeric" autocomplete="off"></label>
-        <label class="full">Telefone ou e-mail (gravado embaixo)<input id="pzCon" class="lc" maxlength="34" placeholder="Ex.: (31) 97365-7905" autocomplete="tel"></label>
+        <label class="full">Telefone ou e-mail (opcional, gravado embaixo)<input id="pzCon" class="lc" maxlength="34" placeholder="Ex.: (31) 97365-7905" autocomplete="tel"></label>
       </div>
       <div class="pz-actions"><button class="pz-ok" id="pzSend" type="button">✔ Aprovar arte e enviar no WhatsApp</button></div>
-      <div class="pz-msg" id="pzMsg">A numeração é gravada em sequência a partir do número informado (padrão M-0001).</div>
+      <div class="pz-msg" id="pzMsg">Todos os campos são opcionais: o que ficar em branco não é gravado. A numeração segue em sequência (padrão M-0001).</div>
     </div>
   </div>
   <aside>
@@ -497,13 +497,14 @@ function drawCustom(g, S, o, mode){
   g.fillStyle = ink; g.strokeStyle = ink; g.textBaseline = 'middle'; g.textAlign = 'center';
   if (mode==='tech'){ g.lineWidth = 6*k; g.beginPath(); g.arc(C,C,C-8*k,0,Math.PI*2); g.stroke(); }
   g.lineWidth = 10*k; g.beginPath(); g.arc(C,C,C-38*k,0,Math.PI*2); g.stroke();
-  const emp = (o.emp||'NOME DA EMPRESA').toUpperCase(), con = (o.con||'TELEFONE OU E-MAIL');
-  o._empPx = fitArc(g, emp, (C-100*k), 2.55, 68*k, 28*k, 800)/k; arcText(g, emp, C-100*k, C, C, false);
-  o._conPx = fitArc(g, con, (C-100*k), 2.35, 60*k, 24*k, 800)/k; arcText(g, con, C-100*k, C, C, true);
+  const emp = (o.emp||'').toUpperCase(), con = (o.con||'');
+  o._empPx = 0; o._conPx = 0;
+  if (emp) { o._empPx = fitArc(g, emp, (C-100*k), 2.55, 68*k, 28*k, 800)/k; arcText(g, emp, C-100*k, C, C, false); }
+  if (con) { o._conPx = fitArc(g, con, (C-100*k), 2.35, 60*k, 24*k, 800)/k; arcText(g, con, C-100*k, C, C, true); }
   g.font = '600 '+(52*k)+'px Montserrat, Arial'; g.fillText('CREDENCIADO', C, 250*k); g.fillText('INCRA', C, 306*k);
   g.lineWidth = 12*k; g.strokeRect(C-215*k, 345*k, 430*k, 92*k);
-  const cod = (o.cod||'CÓDIGO').toUpperCase();
-  g.font = '800 '+(66*k)+'px "Courier New", monospace'; g.fillText([...cod].join(cod.length<=5?' ':''), C, 393*k);
+  const cod = (o.cod||'').toUpperCase();
+  if (cod) { g.font = '800 '+(66*k)+'px "Courier New", monospace'; g.fillText([...cod].join(cod.length<=5?' ':''), C, 393*k); }
   g.lineWidth = 5*k; g.beginPath(); g.moveTo(C, 470*k); g.lineTo(C-40*k, 548*k); g.lineTo(C+40*k, 548*k); g.closePath(); g.stroke();
   g.beginPath(); g.arc(C, 520*k, 9*k, 0, Math.PI*2); g.stroke();
   g.lineWidth = 12*k; g.strokeRect(C-215*k, 590*k, 430*k, 92*k);
@@ -582,14 +583,14 @@ async function buildPDF(code){
   const tx = 175, tw = 110; let ty = 40;
   doc.setTextColor(...navy); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('Dados aprovados pelo cliente', tx, ty); ty += 4;
   const rows = [
-    ['Nome da empresa (arco superior)', (pz.emp||'').toUpperCase()],
-    ['Código credenciado (quadro 1)', (pz.cod||'').toUpperCase()],
+    ['Nome da empresa (arco superior)', pz.emp ? pz.emp.toUpperCase() : 'Em branco — não gravar'],
+    ['Código credenciado (quadro 1)', pz.cod ? pz.cod.toUpperCase() : 'Em branco — quadro vazio'],
     ['Numeração (quadro 2)', 'M - '+(pz.num||'0001')+' em sequência'],
-    ['Telefone / e-mail (arco inferior)', pz.con||''],
+    ['Telefone / e-mail (arco inferior)', pz.con || 'Em branco — não gravar'],
     ['Textos fixos', 'CREDENCIADO INCRA · triângulo de vértice · PROTEGIDO POR LEI'],
     ['Tamanho do marco no visualizador', (L/10)+' cm'],
     ['Quadros (credencial e numeração)', bw+' × '+bh+' mm cada, linha de 0,7 mm'],
-    ['Altura das letras (aprox.)', 'Empresa '+f1(pz._empPx*mm*0.72)+' mm · Contato '+f1(pz._conPx*mm*0.72)+' mm · Código '+f1(66*mm*0.72)+' mm · Textos fixos '+f1(52*mm*0.72)+' mm'],
+    ['Altura das letras (aprox.)', [pz.emp ? 'Empresa '+f1(pz._empPx*mm*0.72)+' mm' : '', pz.con ? 'Contato '+f1(pz._conPx*mm*0.72)+' mm' : '', pz.cod ? 'Código '+f1(66*mm*0.72)+' mm' : '', 'Textos fixos '+f1(52*mm*0.72)+' mm'].filter(Boolean).join(' · ')],
     ['Peça', 'Plaqueta Ø 62 mm do marco de aço galvanizado'],
   ];
   doc.setFontSize(9);
@@ -624,9 +625,7 @@ async function uploadArte(doc, fname, code){
 }
 document.getElementById('pzSend').onclick = async () => {
   pzRead();
-  const miss = []; if (!pz.emp) miss.push(pzF.emp); if (!pz.cod) miss.push(pzF.cod); if (!pz.con) miss.push(pzF.con);
   const msg = document.getElementById('pzMsg');
-  if (miss.length){ miss.forEach(i=>i.classList.add('err')); miss[0].focus(); msg.className='pz-msg'; msg.textContent='Preencha nome da empresa, código credenciado e telefone ou e-mail.'; return; }
   const btn = document.getElementById('pzSend'); const resetBtn = () => { btn.disabled = false; btn.textContent = '✔ Aprovar arte e enviar no WhatsApp'; };
   btn.disabled = true; btn.textContent = 'Gerando a arte…';
   const share = canShareFiles();
@@ -639,7 +638,7 @@ document.getElementById('pzSend').onclick = async () => {
     const blob = doc.output('blob'); const file = new File([blob], fname, {type:'application/pdf'});
     const pdfUrl = URL.createObjectURL(blob);
     const base = 'Olá, Aços Ideais! Aprovei a arte da plaqueta personalizada ('+code+').\n'
-      + '• Empresa: '+pz.emp.toUpperCase()+'\n• Código credenciado: '+pz.cod.toUpperCase()+'\n• Numeração inicial: M-'+(pz.num||'0001')+'\n• Contato gravado: '+pz.con+'\n• Marco: '+(L/10)+' cm';
+      + '• Empresa: '+(pz.emp ? pz.emp.toUpperCase() : '(em branco, não gravar)')+'\n• Código credenciado: '+(pz.cod ? pz.cod.toUpperCase() : '(em branco, não gravar)')+'\n• Numeração inicial: M-'+(pz.num||'0001')+'\n• Contato gravado: '+(pz.con || '(em branco, não gravar)')+'\n• Marco: '+(L/10)+' cm';
     const upload = uploadArte(doc, fname, code);   // salva no Drive da Aços Ideais em paralelo
     let shared = false;
     if (share) {

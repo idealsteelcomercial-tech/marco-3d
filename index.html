@@ -188,7 +188,7 @@
     </div>
     <a class="cta" id="buy" href="https://www.acosideais.com/produtos/marco-de-aco-galvanizado-georreferenciamento-incra/" target="_blank" rel="noopener">Comprar o marco de 30 cm →</a>
     <button class="rec" id="rec">● Gravar vídeo 360° deste tamanho</button>
-    <p class="note" id="recNote">Gera um vídeo girando a peça (8 s) para usar no site, Mercado Livre ou Instagram.</p>
+    <p class="note" id="recNote">Gera um vídeo de 12 s (1080 × 1080) com giro 360°, cotas e aproximação na plaqueta, para o site, Mercado Livre ou Instagram.</p>
     <div class="trust"><span>Envio para todo o Brasil</span><span>Despacho em 48 h</span><span>Plaqueta inclusa</span></div>
   </aside>
 </div>
@@ -659,29 +659,99 @@ document.getElementById('pzSend').onclick = async () => {
   resetBtn();
 };
 
-// ---------- gravação de vídeo 360° ----------
+// ---------- gravação de vídeo 360° (estúdio com marca, cotas e detalhes) ----------
 const recBtn = document.getElementById('rec'), recNote = document.getElementById('recNote');
+let recMode = false;
+function recRoundRect(g, x, y, w, h, r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
+function recBackground(W, H){
+  const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+  const gr = g.createRadialGradient(W/2, H*0.42, 40, W/2, H*0.5, W*0.78); gr.addColorStop(0,'#ffffff'); gr.addColorStop(.6,'#eceef4'); gr.addColorStop(1,'#d3d8e4');
+  g.fillStyle = gr; g.fillRect(0,0,W,H);
+  g.strokeStyle = 'rgba(15,16,86,.04)'; g.lineWidth = 2; for (let i=-H; i<W+H; i+=46){ g.beginPath(); g.moveTo(i,0); g.lineTo(i-H*0.45,H); g.stroke(); }
+  // logo
+  g.fillStyle='#e3312a'; g.beginPath(); g.moveTo(56,86); g.lineTo(76,46); g.lineTo(96,86); g.lineTo(85,86); g.lineTo(76,66); g.lineTo(67,86); g.closePath(); g.fill();
+  g.fillStyle='#0f1056'; g.font='800 30px Montserrat, Arial'; g.textBaseline='alphabetic'; g.fillText('ÇOS IDEAIS', 98, 84);
+  g.fillStyle='#6b7084'; g.font='600 15px Montserrat, Arial'; g.fillText('MARCO DE AÇO GALVANIZADO · PADRÃO INCRA', 58, 112);
+  g.font='800 17px Montserrat, Arial'; const tag='acosideais.com'; const tw=g.measureText(tag).width+40;
+  g.fillStyle='#0f1056'; recRoundRect(g, W-56-tw, 50, tw, 42, 21); g.fill(); g.fillStyle='#fff'; g.fillText(tag, W-56-tw+20, 77);
+  return c;
+}
+function recOverlay(W, H){
+  const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); g.textBaseline='alphabetic';
+  // faixa inferior
+  const by = H-150; const bg2 = g.createLinearGradient(0,by,W,H); bg2.addColorStop(0,'#0f1056'); bg2.addColorStop(1,'#1d2083');
+  g.fillStyle = bg2; g.fillRect(0,by,W,150); g.fillStyle='#e3312a'; g.fillRect(0,by,W,6);
+  g.fillStyle='#fff'; g.font='800 38px Montserrat, Arial'; g.fillText('Marco de Aço Galvanizado · '+(L/10)+' cm', 56, by+58);
+  g.fillStyle='#c6c9f3'; g.font='600 20px Montserrat, Arial';
+  g.fillText('Tubo Ø 2" × parede 0,95 mm · 3 aletas anti-arranque · plaqueta Ø 62 mm', 56, by+94);
+  const info = (typeof pz !== 'undefined' && pz.on && pz.emp) ? ('Plaqueta personalizada: '+pz.emp.toUpperCase()+(pz.cod ? ' · '+pz.cod.toUpperCase() : '')) : ('Peso aprox. '+weights[L]+' kg · gravação de credencial e numeração cortesia');
+  g.fillText(info.slice(0,78), 56, by+124);
+  return c;
+}
+function recLabels(g, W, H){
+  if (!dimGroup || !dimGroup.visible) return;
+  const v = new THREE.Vector3();
+  dimGroup.traverse(o => {
+    if (!o.isCSS2DObject) return;
+    o.getWorldPosition(v); v.project(camera); if (v.z > 1) return;
+    const x = (v.x+1)/2*W, y = (1-v.y)/2*H, txt = o.element.textContent, navy = o.element.classList.contains('navy');
+    g.font = '700 22px Montserrat, Arial'; const tw = g.measureText(txt).width + 22;
+    const bx = Math.min(Math.max(x - tw/2, 8), W - tw - 8), byy = y - 18;
+    g.fillStyle = 'rgba(255,255,255,.95)'; recRoundRect(g, bx, byy, tw, 36, 9); g.fill();
+    g.strokeStyle = navy ? '#cfd2ea' : '#f3c3c0'; g.lineWidth = 2; g.stroke();
+    g.fillStyle = navy ? '#0f1056' : '#e3312a'; g.textBaseline = 'middle'; g.fillText(txt, bx+11, byy+19); g.textBaseline = 'alphabetic';
+  });
+}
 recBtn.onclick = async () => {
-  if (!window.MediaRecorder || !canvas.captureStream){ recNote.textContent = 'Seu navegador não suporta gravação. Use o Chrome no computador.'; return; }
-  recBtn.disabled = true; recBtn.textContent = '● Gravando… 8 s';
-  const showDims = dimGroup.visible; dimGroup.visible = false;
-  const prevAuto = controls.autoRotate; controls.autoRotate = false;
-  goView('iso', true);
-  const stream = canvas.captureStream(60);
-  const type = ['video/mp4;codecs=avc1','video/webm;codecs=vp9','video/webm'].find(t => MediaRecorder.isTypeSupported(t));
-  const rec = new MediaRecorder(stream, { mimeType:type, videoBitsPerSecond: 12e6 });
-  const chunks = []; rec.ondataavailable = e => chunks.push(e.data);
-  recording = { start: performance.now(), dur: 8000, base: camera.position.clone().sub(controls.target) };
-  rec.start();
-  await new Promise(r => setTimeout(r, 8050));
-  rec.stop(); await new Promise(r => rec.onstop = r);
-  recording = null; dimGroup.visible = showDims; controls.autoRotate = prevAuto;
+  const canvasRec = document.createElement('canvas');
+  if (!window.MediaRecorder || !canvasRec.captureStream){ recNote.textContent = 'Seu navegador não suporta gravação. Use o Chrome no computador.'; return; }
+  const W = 1080, H = 1080, FPS = 30, T1 = 7, T2 = 3.5, HOLD = 1.5;
+  recBtn.disabled = true; recBtn.textContent = '● Gravando… '+Math.round(T1+T2+HOLD)+' s';
+  const prev = { auto: controls.autoRotate, grid: grid.visible, floor: floor.visible, pr: renderer.getPixelRatio(), cam: camera.position.clone(), tgt: controls.target.clone(), mode: currentMode, explode: explodeTarget };
+  recMode = true; controls.autoRotate = false; grid.visible = false; floor.visible = false; explodeTarget = 0; explode = 0;
+  if (capGroup) capGroup.position.y = L; fins.forEach(p => p.rotation.z = -0.38);
+  applyMode('real'); camera.clearViewOffset();
+  renderer.setPixelRatio(1); renderer.setSize(W, H, false); camera.aspect = 1; camera.updateProjectionMatrix();
+  await document.fonts.ready;
+  const bg = recBackground(W, H), ov = recOverlay(W, H);
+  canvasRec.width = W; canvasRec.height = H; const g = canvasRec.getContext('2d');
+  const stream = canvasRec.captureStream(FPS);
+  const type = ['video/mp4;codecs=avc1.640028','video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm'].find(t => MediaRecorder.isTypeSupported(t));
+  const rec = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: 10e6 });
+  const chunks = []; rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  const cy = L*0.56, d = Math.max(L+150, 300)*2.45, tgt = new THREE.Vector3(0, cy, 0), a0 = Math.PI/2;
+  const p0 = new THREE.Vector3(d*Math.cos(a0), cy + d*0.32, d*Math.sin(a0));
+  const pEnd = new THREE.Vector3(0, L+6+300, 135), tEnd = new THREE.Vector3(0, L+6-18, 0);
+  setDimsVisible(true);
+  const draw = () => { syncWire(); renderer.render(scene, camera); g.drawImage(bg, 0, 0); g.drawImage(renderer.domElement, 0, 0, W, H); recLabels(g, W, H); g.drawImage(ov, 0, 0); };
+  camera.position.copy(p0); camera.lookAt(tgt); draw();
+  rec.start(250);
+  const t0 = performance.now();
+  await new Promise(resolve => {
+    const frame = () => {
+      const t = (performance.now() - t0)/1000;
+      if (t < T1){ const a = a0 + 2*Math.PI*(t/T1); camera.position.set(d*Math.cos(a), cy + d*0.32, d*Math.sin(a)); camera.lookAt(tgt); }
+      else {
+        if (dimGroup.visible) setDimsVisible(false);
+        const k = Math.min(1, (t - T1)/T2), e = k*k*(3-2*k);
+        camera.position.lerpVectors(p0, pEnd, e); const lt = new THREE.Vector3().lerpVectors(tgt, tEnd, e); camera.lookAt(lt);
+      }
+      draw();
+      if (t < T1 + T2 + HOLD) requestAnimationFrame(frame); else resolve();
+    };
+    requestAnimationFrame(frame);
+  });
+  await new Promise(r => { rec.onstop = r; rec.stop(); });
+  // restaura a visualização
+  renderer.setPixelRatio(prev.pr); resize(); grid.visible = prev.grid; floor.visible = prev.floor; explodeTarget = prev.explode;
+  camera.position.copy(prev.cam); controls.target.copy(prev.tgt); controls.autoRotate = prev.auto; camera.lookAt(controls.target);
+  applyMode(prev.mode); setDimsVisible(document.getElementById('tDim').checked); recMode = false;
+  if (typeof pzSheet !== 'undefined' && pzSheet.classList.contains('open')) pzLayout(true);
   const blob = new Blob(chunks, { type }); const ext = type.includes('mp4') ? 'mp4' : 'webm';
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = `marco-aco-${L/10}cm-360.${ext}`;
-  document.body.appendChild(a); a.click(); a.remove();
+  const fname = 'marco-aco-'+(L/10)+'cm-360.'+ext; const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove();
   recBtn.disabled = false; recBtn.textContent = '● Gravar vídeo 360° deste tamanho';
-  recNote.innerHTML = `Vídeo gerado (${ext.toUpperCase()}). Se o download não abrir, <a href="${url}" download="marco-aco-${L/10}cm-360.${ext}">clique aqui</a>.`;
+  recNote.innerHTML = 'Vídeo gerado ('+ext.toUpperCase()+', 1080 × 1080). Se o download não abrir, <a href="'+url+'" download="'+fname+'">clique aqui</a>.';
 };
 let recording = null;
 // ---------- loop ----------
@@ -693,6 +763,7 @@ function resize(){
 new ResizeObserver(resize).observe(stage);
 const clock = new THREE.Clock();
 function tick(){
+  if (recMode) { requestAnimationFrame(tick); return; }
   const dt = Math.min(clock.getDelta(), 0.05);
   // vista explodida suave
   explode += (explodeTarget - explode) * Math.min(1, dt*6);

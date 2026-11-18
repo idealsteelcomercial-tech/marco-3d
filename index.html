@@ -83,6 +83,36 @@
   body.embed .sizeinfo{display:block}
   body.embed .brand .tag{display:none}
   @media (max-width:520px){ .sizebar span{display:none} .sizebar button{padding:6px 7px;min-width:32px;font-size:11px} }
+
+  .pz-btn{position:absolute;left:14px;top:52px;display:flex;align-items:center;gap:7px;border:0;background:var(--red);color:#fff;font:800 12.5px Montserrat;padding:10px 14px;border-radius:12px;cursor:pointer;box-shadow:0 8px 20px rgba(227,49,42,.28);z-index:5}
+  .pz-btn:hover{filter:brightness(1.06)}
+  .pz-sheet{position:absolute;left:12px;right:12px;bottom:12px;max-height:60%;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 50px rgba(15,16,86,.22);padding:14px 16px 16px;display:none;z-index:6}
+  .pz-sheet.open{display:block}
+  .pz-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .pz-head b{font:800 14px Montserrat;color:var(--navy)}
+  .pz-head button{border:0;background:#f1f2f7;border-radius:8px;width:30px;height:30px;font:700 16px Montserrat;color:var(--navy);cursor:pointer}
+  .pz-sub{font-size:11.5px;color:var(--muted);margin-bottom:10px;line-height:1.4}
+  .pz-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .pz-grid .full{grid-column:1/-1}
+  .pz-grid label{display:flex;flex-direction:column;gap:4px;font:700 11px Montserrat;color:var(--ink)}
+  .pz-grid input{border:1px solid var(--line);border-radius:9px;padding:9px 10px;font:600 13px Montserrat;color:var(--navy);outline:none;text-transform:uppercase}
+  .pz-grid input.lc{text-transform:none}
+  .pz-grid input:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(15,16,86,.08)}
+  .pz-grid input.err{border-color:var(--red);box-shadow:0 0 0 3px rgba(227,49,42,.12)}
+  .pz-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .pz-ok{flex:1;min-width:200px;border:0;background:#1fa855;color:#fff;font:800 13px Montserrat;padding:12px;border-radius:11px;cursor:pointer}
+  .pz-ok:disabled{opacity:.6;cursor:wait}
+  .pz-msg{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.45}
+  .pz-msg.ok{color:#137a3c}
+  @media (min-width:861px){ body:not(.embed) .pz-sheet{left:14px;right:auto;width:400px;top:auto} }
+  body.embed .pz-sheet,.pz-sheet.compact{max-height:56%;padding:10px 12px 12px;left:8px;right:8px;bottom:8px}
+  body.embed .pz-sub,.pz-sheet.compact .pz-sub{display:none}
+  body.embed .pz-head,.pz-sheet.compact .pz-head{margin-bottom:6px}
+  body.embed .pz-grid input,.pz-sheet.compact .pz-grid input{padding:7px 9px;font-size:12px}
+  body.embed .pz-grid,.pz-sheet.compact .pz-grid{gap:6px}
+  body.embed .pz-ok,.pz-sheet.compact .pz-ok{padding:10px;font-size:12px}
+  body.embed .pz-actions,.pz-sheet.compact .pz-actions{margin-top:8px}
+  .pz-open-mode .sizeinfo,.pz-open-mode .pz-btn{display:none !important}
 </style>
 <script type="importmap">
 { "imports": {
@@ -107,6 +137,19 @@
     <div class="cad" id="cad">ESCALA 1:1 · UNID. mm</div>
     <div class="sizebar" id="sizebar"><span>Tamanho</span><button data-l="300" class="on">30</button><button data-l="400">40</button><button data-l="500">50</button><button data-l="600">60</button><button data-l="900">90</button></div>
     <div class="sizeinfo" id="sizeinfo">30 cm · 300 mm · 0,450 kg</div>
+    <button class="pz-btn" id="pzOpen" type="button">✎ Plaqueta personalizada</button>
+    <div class="pz-sheet" id="pzSheet" role="dialog" aria-label="Plaqueta personalizada">
+      <div class="pz-head"><b>Plaqueta personalizada</b><button type="button" id="pzClose" aria-label="Fechar">×</button></div>
+      <div class="pz-sub">Preencha os dados e veja na hora como a plaqueta fica no marco. Ao aprovar, geramos o PDF da arte para o carimbo de gravação.</div>
+      <div class="pz-grid">
+        <label class="full">Nome da empresa (gravado no topo)<input id="pzEmp" maxlength="34" placeholder="Ex.: SÍTIO ARQUEOLÓGICO" autocomplete="organization"></label>
+        <label>Código credenciado<input id="pzCod" maxlength="8" placeholder="Ex.: IPHAN" autocomplete="off"></label>
+        <label>Numeração inicial (opcional)<input id="pzNum" maxlength="6" placeholder="Ex.: 0001" inputmode="numeric" autocomplete="off"></label>
+        <label class="full">Telefone ou e-mail (gravado embaixo)<input id="pzCon" class="lc" maxlength="34" placeholder="Ex.: (31) 97365-7905" autocomplete="tel"></label>
+      </div>
+      <div class="pz-actions"><button class="pz-ok" id="pzSend" type="button">✔ Aprovar arte e enviar no WhatsApp</button></div>
+      <div class="pz-msg" id="pzMsg">A numeração é gravada em sequência a partir do número informado (padrão M-0001).</div>
+    </div>
   </div>
   <aside>
     <div>
@@ -131,6 +174,7 @@
       <div class="field"><label for="cred">Credencial INCRA</label><input id="cred" maxlength="6" value="ABCD" autocomplete="off"></div>
       <div class="field"><label for="num">Numeração do vértice</label><input id="num" maxlength="8" value="M-0001" autocomplete="off"></div>
       <p class="note">A gravação de 1 credencial + numeração sequencial é cortesia — a peça chega pronta para cravar.</p>
+      <button class="rec" type="button" onclick="document.getElementById('pzOpen').click()" style="margin-top:6px;width:100%">✎ Criar plaqueta personalizada e aprovar a arte</button>
     </div>
     <div class="group">
       <h3>Modo de exibição</h3>
@@ -356,7 +400,7 @@ function buildDims(){
   // aletas
   const lA = makeLabel('3 aletas anti-arranque', 'navy'); lA.position.set(-R-110, 70, 0); dimGroup.add(lA);
   dimGroup.add(dimLine(new THREE.Vector3(-R-48,70,0), new THREE.Vector3(-R-10,66,0), navy));
-  dimGroup.visible = document.getElementById('tDim').checked;
+  setDimsVisible(document.getElementById('tDim').checked);
 }
 // ---------- modos de exibição ----------
 let currentMode = 'real';
@@ -394,7 +438,7 @@ document.getElementById('sizes').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   document.querySelectorAll('#sizes button').forEach(x => x.classList.toggle('on', x===b));
   L = +b.dataset.l; if (wireGroup) scene.remove(wireGroup);
-  buildMarco(); goView('iso');
+  buildMarco(); if (pz.on) { redrawCustom(); goView(pzSheet.classList.contains('open') ? 'top' : 'iso'); } else goView('iso');
   document.getElementById('sL').textContent = `${L} mm`;
   document.getElementById('sW').textContent = `${weights[L]} kg`;
   document.getElementById('buy').textContent = `Comprar o marco de ${sizeLabel(L)} →`;
@@ -409,7 +453,7 @@ document.getElementById('viewbar').addEventListener('click', e => {
 });
 const spinBtn = document.getElementById('spinBtn');
 spinBtn.onclick = () => { controls.autoRotate = !controls.autoRotate; spinBtn.classList.toggle('on', controls.autoRotate); };
-document.getElementById('tDim').onchange = e => { dimGroup.visible = e.target.checked; };
+document.getElementById('tDim').onchange = e => { setDimsVisible(e.target.checked); };
 document.getElementById('tExp').onchange = e => { explodeTarget = e.target.checked ? 1 : 0; };
 const cred = document.getElementById('cred'), num = document.getElementById('num');
 const redraw = () => drawPlaqueta(cred.value, num.value);
@@ -422,6 +466,163 @@ document.getElementById('sizes').addEventListener('click', () => {
   document.querySelectorAll('#sizebar button').forEach(x => x.classList.toggle('on', +x.dataset.l === L));
   document.getElementById('sizeinfo').textContent = (L/10)+' cm · '+L+' mm · '+weights[L]+' kg';
 });
+// ---------- plaqueta personalizada ----------
+function setDimsVisible(v){ if (!dimGroup) return; dimGroup.visible = v; dimGroup.traverse(o => { if (o.isCSS2DObject) { o.visible = v; o.element.style.display = v ? '' : 'none'; } }); }
+const WA_NUMBER = '5511991364294';
+const pz = { on:false, emp:'', cod:'', con:'', num:'' };
+function fitArc(g, text, r, maxAng, maxSize, minSize, weight){
+  let s = maxSize;
+  for (; s > minSize; s -= 2){ g.font = weight+' '+s+'px Montserrat, Arial'; const w=[...text].reduce((a,c)=>a+g.measureText(c).width+5,-5); if (w/r <= maxAng) break; }
+  g.font = weight+' '+s+'px Montserrat, Arial'; return s;
+}
+function drawCustom(g, S, o, mode){
+  // mode: 'tex' (textura metálica), 'bump' (relevo), 'tech' (desenho técnico preto e branco)
+  const C = S/2, k = S/1024;
+  if (mode === 'bump'){ g.fillStyle='#fff'; g.fillRect(0,0,S,S); }
+  else if (mode === 'tech'){ g.fillStyle='#fff'; g.fillRect(0,0,S,S); }
+  else {
+    const grd = g.createRadialGradient(C*0.8,C*0.7,40*k,C,C,C); grd.addColorStop(0,'#e6e8ea'); grd.addColorStop(1,'#a9aeb4');
+    g.fillStyle = grd; g.fillRect(0,0,S,S);
+    g.globalAlpha = .07; for (let r=20*k;r<C;r+=3*k){ g.strokeStyle = Math.random()>.5?'#ffffff':'#5a6068'; g.lineWidth=1.3*k; g.beginPath(); g.arc(C,C,r,0,Math.PI*2); g.stroke(); } g.globalAlpha = 1;
+  }
+  const ink = mode==='bump' ? '#000' : (mode==='tech' ? '#111' : 'rgba(55,60,68,.92)');
+  g.fillStyle = ink; g.strokeStyle = ink; g.textBaseline = 'middle'; g.textAlign = 'center';
+  if (mode==='tech'){ g.lineWidth = 6*k; g.beginPath(); g.arc(C,C,C-8*k,0,Math.PI*2); g.stroke(); }
+  g.lineWidth = 10*k; g.beginPath(); g.arc(C,C,C-38*k,0,Math.PI*2); g.stroke();
+  const emp = (o.emp||'NOME DA EMPRESA').toUpperCase(), con = (o.con||'TELEFONE OU E-MAIL');
+  o._empPx = fitArc(g, emp, (C-100*k), 2.55, 68*k, 28*k, 800)/k; arcText(g, emp, C-100*k, C, C, false);
+  o._conPx = fitArc(g, con, (C-100*k), 2.35, 60*k, 24*k, 800)/k; arcText(g, con, C-100*k, C, C, true);
+  g.font = '600 '+(52*k)+'px Montserrat, Arial'; g.fillText('CREDENCIADO', C, 250*k); g.fillText('INCRA', C, 306*k);
+  g.lineWidth = 12*k; g.strokeRect(C-215*k, 345*k, 430*k, 92*k);
+  const cod = (o.cod||'CÓDIGO').toUpperCase();
+  g.font = '800 '+(66*k)+'px "Courier New", monospace'; g.fillText([...cod].join(cod.length<=5?' ':''), C, 393*k);
+  g.lineWidth = 5*k; g.beginPath(); g.moveTo(C, 470*k); g.lineTo(C-40*k, 548*k); g.lineTo(C+40*k, 548*k); g.closePath(); g.stroke();
+  g.beginPath(); g.arc(C, 520*k, 9*k, 0, Math.PI*2); g.stroke();
+  g.lineWidth = 12*k; g.strokeRect(C-215*k, 590*k, 430*k, 92*k);
+  g.textAlign='left'; g.font = '800 '+(60*k)+'px "Courier New", monospace'; g.fillText('M - '+(o.num||''), C-195*k, 638*k); g.textAlign='center';
+  g.font = '600 '+(54*k)+'px Montserrat, Arial'; g.fillText('PROTEGIDO POR', C, 736*k); g.fillText('LEI', C, 796*k);
+  g.textAlign = 'left';
+}
+function redrawCustom(){
+  drawCustom(plaqCanvas.getContext('2d'), 1024, pz, 'tex');
+  drawCustom(bumpCanvas.getContext('2d'), 1024, pz, 'bump');
+  plaqTex.needsUpdate = true; bumpTex.needsUpdate = true;
+}
+const pzSheet = document.getElementById('pzSheet');
+const pzF = { emp:document.getElementById('pzEmp'), cod:document.getElementById('pzCod'), num:document.getElementById('pzNum'), con:document.getElementById('pzCon') };
+function pzRead(){ pz.emp=pzF.emp.value.trim(); pz.cod=pzF.cod.value.trim(); pz.num=pzF.num.value.replace(/\D/g,'').slice(0,6); pz.con=pzF.con.value.trim(); }
+function pzCompact(){ return document.body.classList.contains('embed') || stage.clientWidth < 861; }
+function pzLayout(open){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  stage.classList.toggle('pz-open-mode', !!open);
+  pzSheet.classList.toggle('compact', pzCompact());
+  if (open && pzCompact()) {
+    camera.setViewOffset(w, h, 0, Math.round(h*0.27), w, h);
+    camTarget = { p: new THREE.Vector3(0.01, L+6+360, 150), t: new THREE.Vector3(0, L+6, 0) };
+  } else camera.clearViewOffset();
+}
+function pzOpen(){
+  pz.on = true; pzSheet.classList.add('open'); pzRead(); redrawCustom();
+  const td=document.getElementById('tDim'); td.checked=false; setDimsVisible(false); controls.autoRotate = false; spinBtn.classList.remove('on'); goView('top'); pzLayout(true);
+  setTimeout(()=>pzF.emp.focus(), 50);
+}
+function pzClose(){ pzSheet.classList.remove('open'); pzLayout(false); }
+document.getElementById('pzOpen').onclick = pzOpen;
+document.getElementById('pzClose').onclick = pzClose;
+Object.values(pzF).forEach(i => i.addEventListener('input', () => { i.classList.remove('err'); pzRead(); redrawCustom(); }));
+window.addEventListener('resize', () => pzLayout(pzSheet.classList.contains('open')));
+const _origRedraw = redraw;
+cred.oninput = () => { if (!pz.on) drawPlaqueta(cred.value, num.value); };
+num.oninput = cred.oninput;
+document.fonts.ready.then(() => { if (pz.on) redrawCustom(); });
+
+function loadJsPDF(){
+  if (window.jspdf) return Promise.resolve(window.jspdf.jsPDF);
+  return new Promise((res, rej) => { const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'; s.onload=()=>res(window.jspdf.jsPDF); s.onerror=rej; document.head.appendChild(s); });
+}
+function artCode(){ const d=new Date(), p=n=>String(n).padStart(2,'0'); return 'ART-'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes()); }
+async function buildPDF(code){
+  const jsPDF = await loadJsPDF();
+  const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+  const navy=[15,16,86], red=[227,49,42], grey=[110,112,130];
+  // cabeçalho
+  doc.setFillColor(...navy); doc.rect(0,0,297,22,'F'); doc.setFillColor(...red); doc.rect(0,22,297,1.2,'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.text('AÇOS IDEAIS', 12, 10);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.text('Arte para carimbo de gravação — Plaqueta do marco de aço galvanizado (padrão INCRA)', 12, 16);
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.text(code, 285, 10, {align:'right'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.text('Emitido em '+new Date().toLocaleString('pt-BR'), 285, 16, {align:'right'});
+  // desenho técnico 2:1 (Ø62 mm → 124 mm)
+  const cv = document.createElement('canvas'); cv.width = cv.height = 2048; drawCustom(cv.getContext('2d'), 2048, pz, 'tech');
+  const D = 124, x0 = 22, y0 = 40; doc.addImage(cv.toDataURL('image/png'), 'PNG', x0, y0, D, D);
+  const mm = 62/1024, sc = 2; const f1 = v => (Math.round(v*10)/10).toFixed(1).replace('.',','); // 1 px da arte = 0,0605 mm reais; desenho em escala 2:1
+  const cx = x0 + D/2, cy = y0 + D/2;
+  doc.setDrawColor(...red); doc.setTextColor(...red); doc.setLineWidth(0.25); doc.setFontSize(8);
+  // cota diâmetro
+  doc.line(x0, y0+D+8, x0+D, y0+D+8); doc.line(x0, y0+D+3, x0, y0+D+10); doc.line(x0+D, y0+D+3, x0+D, y0+D+10);
+  doc.text('Ø 62,0 mm (diâmetro da plaqueta)', cx, y0+D+13, {align:'center'});
+  // cota quadros
+  const bw = (430*mm).toFixed(1).replace('.',','), bh = (92*mm).toFixed(1).replace('.',',');
+  const bx1 = cx - 215*mm*sc, bx2 = cx + 215*mm*sc, by = y0 + 345*mm*sc;
+  doc.line(x0+D+6, y0+345*mm*sc, x0+D+6, y0+437*mm*sc); doc.text(bh+' mm', x0+D+8, y0+391*mm*sc, {align:'left'});
+  doc.line(x0+D+6, y0+590*mm*sc, x0+D+6, y0+682*mm*sc); doc.text(bh+' mm', x0+D+8, y0+636*mm*sc, {align:'left'});
+  doc.setTextColor(...grey); doc.setFontSize(8); doc.text('ESCALA 2:1 · COTAS EM MILÍMETROS (TAMANHO REAL)', x0, y0-5);
+  // quadro de informações
+  const tx = 175, tw = 110; let ty = 40;
+  doc.setTextColor(...navy); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('Dados aprovados pelo cliente', tx, ty); ty += 4;
+  const rows = [
+    ['Nome da empresa (arco superior)', (pz.emp||'').toUpperCase()],
+    ['Código credenciado (quadro 1)', (pz.cod||'').toUpperCase()],
+    ['Numeração (quadro 2)', 'M - '+(pz.num||'0001')+' em sequência'],
+    ['Telefone / e-mail (arco inferior)', pz.con||''],
+    ['Textos fixos', 'CREDENCIADO INCRA · triângulo de vértice · PROTEGIDO POR LEI'],
+    ['Tamanho do marco no visualizador', (L/10)+' cm'],
+    ['Quadros (credencial e numeração)', bw+' × '+bh+' mm cada, linha de 0,7 mm'],
+    ['Altura das letras (aprox.)', 'Empresa '+f1(pz._empPx*mm*0.72)+' mm · Contato '+f1(pz._conPx*mm*0.72)+' mm · Código '+f1(66*mm*0.72)+' mm · Textos fixos '+f1(52*mm*0.72)+' mm'],
+    ['Peça', 'Plaqueta Ø 62 mm do marco de aço galvanizado'],
+  ];
+  doc.setFontSize(9);
+  rows.forEach(([k,v]) => {
+    const lines = doc.splitTextToSize(String(v||'—'), tw-4);
+    const h = 6 + lines.length*4.2;
+    doc.setDrawColor(220,222,232); doc.setLineWidth(0.2); doc.rect(tx, ty, tw, h);
+    doc.setFont('helvetica','normal'); doc.setTextColor(...grey); doc.setFontSize(7.5); doc.text(k.toUpperCase(), tx+2, ty+3.6);
+    doc.setFont('helvetica','bold'); doc.setTextColor(20,22,40); doc.setFontSize(10); doc.text(lines, tx+2, ty+7.8);
+    ty += h;
+  });
+  ty += 6;
+  // miniatura 3D
+  try { renderer.render(scene, camera); const src = renderer.domElement; const wc = document.createElement('canvas'); wc.width = src.width; wc.height = src.height; const wg = wc.getContext('2d'); wg.fillStyle = '#eef0f5'; wg.fillRect(0,0,wc.width,wc.height); wg.drawImage(src,0,0); const shot = wc.toDataURL('image/jpeg', 0.85); const r = renderer.domElement.height/renderer.domElement.width; const iw = 48; doc.addImage(shot, 'JPEG', tx, ty, iw, iw*r); doc.setFontSize(7.5); doc.setTextColor(...grey); doc.setFont('helvetica','normal'); doc.text('Prévia 3D aprovada', tx, ty+iw*r+4); } catch(e) {}
+  // rodapé
+  doc.setDrawColor(...navy); doc.setLineWidth(0.4); doc.line(12, 196, 285, 196);
+  doc.setFontSize(8); doc.setTextColor(...grey); doc.setFont('helvetica','normal');
+  doc.text('Arte aprovada pelo cliente no visualizador 3D. Conferir os dados antes de confeccionar o carimbo. Aços Ideais · CNPJ 27.797.999/0001-06 · WhatsApp (11) 99136-4294 · acosideais.com', 12, 201);
+  return doc;
+}
+document.getElementById('pzSend').onclick = async () => {
+  pzRead();
+  const miss = []; if (!pz.emp) miss.push(pzF.emp); if (!pz.cod) miss.push(pzF.cod); if (!pz.con) miss.push(pzF.con);
+  const msg = document.getElementById('pzMsg');
+  if (miss.length){ miss.forEach(i=>i.classList.add('err')); miss[0].focus(); msg.className='pz-msg'; msg.textContent='Preencha nome da empresa, código credenciado e telefone ou e-mail.'; return; }
+  const btn = document.getElementById('pzSend'); btn.disabled = true; btn.textContent = 'Gerando PDF da arte…';
+  try {
+    const code = artCode(); const doc = await buildPDF(code);
+    const fname = 'arte-plaqueta-'+(pz.cod||'marco').toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+code.toLowerCase()+'.pdf';
+    const blob = doc.output('blob'); const file = new File([blob], fname, {type:'application/pdf'});
+    const text = 'Olá, Aços Ideais! Aprovei a arte da plaqueta personalizada ('+code+').\n'
+      + '• Empresa: '+pz.emp.toUpperCase()+'\n• Código credenciado: '+pz.cod.toUpperCase()+'\n• Numeração inicial: M-'+(pz.num||'0001')+'\n• Contato gravado: '+pz.con+'\n• Marco: '+(L/10)+' cm\nSegue o PDF da arte.';
+    let shared = false;
+    if (navigator.canShare && navigator.canShare({ files:[file] })) {
+      try { await navigator.share({ files:[file], text }); shared = true; } catch(e) { if (e && e.name === 'AbortError') { btn.disabled=false; btn.textContent='✔ Aprovar arte e enviar no WhatsApp'; return; } }
+    }
+    if (!shared) {
+      const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove();
+      window.open('https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(text), '_blank');
+      msg.className = 'pz-msg ok'; msg.innerHTML = 'Arte aprovada! O PDF <b>'+fname+'</b> foi baixado. Anexe esse arquivo na conversa do WhatsApp que abrimos (clipe 📎 → Documento). Se o WhatsApp não abrir, chame no (11) 99136-4294.';
+    } else { msg.className = 'pz-msg ok'; msg.textContent = 'Arte enviada! Em breve confirmamos pelo WhatsApp.'; }
+  } catch(e) { msg.className='pz-msg'; msg.textContent = 'Não foi possível gerar o PDF ('+e.message+'). Tente novamente ou chame no WhatsApp (11) 99136-4294.'; }
+  btn.disabled = false; btn.textContent = '✔ Aprovar arte e enviar no WhatsApp';
+};
+
 // ---------- gravação de vídeo 360° ----------
 const recBtn = document.getElementById('rec'), recNote = document.getElementById('recNote');
 recBtn.onclick = async () => {

@@ -599,7 +599,7 @@ async function buildPDF(code){
   return doc;
 }
 const UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbwOAc8Kgi6sGJgEtCGUBZoQ8cAsc0gMpi3a6ltUsrBm9OCROwB31Rji2UHIlJp-3V5z/exec';
-function canShareFiles(){ try { return !!(navigator.canShare && navigator.canShare({ files:[new File(['%PDF'], 'teste.pdf', {type:'application/pdf'})] })); } catch(e) { return false; } }
+function canShareFiles(){ try { const fp = document.permissionsPolicy || document.featurePolicy; if (fp && fp.allowsFeature && !fp.allowsFeature('web-share')) return false; return !!(navigator.canShare && navigator.canShare({ files:[new File(['%PDF'], 'teste.pdf', {type:'application/pdf'})] })); } catch(e) { return false; } }
 async function uploadArte(doc, fname, code){
   if (!UPLOAD_URL || UPLOAD_URL.indexOf('http') !== 0) return null;
   const pdf = doc.output('datauristring').split(',')[1];
